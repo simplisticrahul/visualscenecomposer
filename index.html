@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Scene Composer (Auto)</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="whisk-layout">
+    
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="material-icons-round">auto_awesome</span>
+            <h1>Composer</h1>
+        </div>
+
+        <div class="scroll-content">
+            <div class="section-group">
+                <h3>CAST & CHARACTERS</h3>
+                <div class="char-input-group">
+                    <input type="text" id="newCharName" placeholder="Name">
+                    <input type="text" id="newCharDesc" placeholder="Description (Auto-Generates Image)">
+                    <button class="btn-icon" onclick="addCharacter()">
+                        <span class="material-icons-round">add</span>
+                    </button>
+                </div>
+                <div class="char-list" id="characterListContainer"></div>
+            </div>
+
+            <div class="section-group">
+                <h3>VISUAL STYLE</h3>
+                <textarea id="styleInput" rows="2" placeholder="e.g. 2D modern anime..." onchange="generateStylePreview()"></textarea>
+                <div id="styleImageContainer" class="bg-thumb-container" style="height: 100px; margin-top:8px;"></div>
+            </div>
+
+            <div class="section-group">
+                <h3>BACKGROUND SCENE</h3>
+                <textarea id="bgInput" rows="2" placeholder="e.g. Rainy rooftop at night..." onchange="generateBackgroundImage()"></textarea>
+                <div id="bgImageContainer" class="bg-thumb-container"></div>
+            </div>
+
+            <div class="section-group">
+                <h3>SETTINGS</h3>
+                <div class="config-grid">
+                    <label>Model <select id="modelSelect"><option value="flux">flux</option></select></label>
+                    <label>Count <input type="number" id="imgCount" value="4" min="1" max="4"></label>
+                </div>
+                <div class="config-grid">
+                    <label>W <input type="number" id="imgWidth" value="1920" step="64"></label>
+                    <label>H <input type="number" id="imgHeight" value="1080" step="64"></label>
+                </div>
+                <label>Seed <input type="number" id="imgSeed" value="9632"></label> 
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <div class="studio-header">
+            <div class="prompt-studio-box">
+                <div class="label-row">
+                    <label>AI GENERATED PROMPT (Editable)</label>
+                </div>
+                <textarea id="promptOutput" class="prompt-box" placeholder="Prompt appears here..."></textarea>
+                
+                <button id="renderImagesBtn" class="btn-render" onclick="renderImages()">
+                    <span class="material-icons-round">filter_hdr</span>
+                    RENDER IMAGES
+                </button>
+            </div>
+        </div>
+
+        <div class="gallery-area">
+            <div class="image-grid" id="imageGrid">
+                <div class="empty-state">Results will appear here</div>
+            </div>
+        </div>
+
+        <div class="floating-bar-wrapper">
+            <div class="floating-bar">
+                <textarea id="actionInput" rows="1" placeholder="Describe the action... (e.g. Character running in the rain)"></textarea>
+                <button id="generatePromptBtn" class="btn-action-primary" onclick="generatePrompt()">
+                    <span class="material-icons-round">arrow_upward</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
