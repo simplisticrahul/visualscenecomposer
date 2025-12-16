@@ -2,6 +2,7 @@
 // 1. CONFIGURATION
 // =========================================================
 
+// ⚠️ Ensure your API key is correct
 const EMBEDDED_API_KEY = "plln_sk_U8UNH5IInwBGiLbBBQxiiKaYXTW5DMA1"; 
 
 const TEXT_API_URL = "https://gen.pollinations.ai/v1/chat/completions";
@@ -20,12 +21,20 @@ let styleImageUrl = null;
 window.onload = async function() {
     loadSettings();
     await fetchModels();
-    if(document.getElementById('styleInput').value) generateStylePreview();
-    if(document.getElementById('bgInput').value) generateBackgroundImage();
+    
+    // Auto-generate visual previews on load if text exists
+    if(document.getElementById('styleInput') && document.getElementById('styleInput').value) {
+        generateStylePreview();
+    }
+    if(document.getElementById('bgInput') && document.getElementById('bgInput').value) {
+        generateBackgroundImage();
+    }
 };
 
 async function fetchModels() {
     const select = document.getElementById('modelSelect');
+    if(!select) return; // Guard clause if element missing
+    
     try {
         const res = await fetch(MODELS_URL);
         if(res.ok) {
@@ -36,7 +45,7 @@ async function fetchModels() {
                 const opt = document.createElement('option');
                 opt.value = modelName;
                 opt.text = modelName;
-                if(modelName === 'flux') opt.selected = true;
+                if(modelName === 'zimage') opt.selected = true;
                 select.appendChild(opt);
             });
         }
@@ -77,7 +86,7 @@ async function generatePrompt() {
 
     try {
         const systemPrompt = `
-        You are an advanced Visual Scene Composer AI. Your task is to synthesize multiple disjointed data sources into a single, cohesive, and highly descriptive image generation prompt. You act as the bridge between a screenplay action and a generative image model.
+       You are an advanced Visual Scene Composer AI. Your task is to synthesize multiple disjointed data sources into a single, cohesive, and highly descriptive image generation prompt. You act as the bridge between a screenplay action and a generative image model.
 Input Data Structure: You will receive four distinct blocks of information: Visual Style, Characters (Master designs), Background, Action.
 Processing Logic:
 Analyze the Action prompt: Identify Subjects, Action, Camera/Framing.
@@ -86,13 +95,26 @@ Integrate Setting: Blend Background details naturally with the action location.
 Construct Final Output order: [Visual Style tags], [Camera Angle/Shot Type] + [Brief Scene Summary], [Primary Character Details & Action], [Setting/Background Context], [Secondary Character Details & Action].
 Rules: Strictly adhere to physical descriptions in Master Characters Design unless overridden by the Action prompt. The output must be a continuous, descriptive paragraph.
 Output Format: Provide ONLY the final generated prompt.
-      
-   `;
+        `;
+
+        // --- FIX: Explicitly defining userMessage here ---
+        const userMessage = `
+        Visual Style: ${style}
+        Characters Master List: ${chars}
+        Background Description: ${bg}
+        Action Scenario: ${action}
+        `;
 
         const response = await fetch(TEXT_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${EMBEDDED_API_KEY}` },
-            body: JSON.stringify({ model: 'gemini', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }] })
+            body: JSON.stringify({ 
+                model: 'gemini', 
+                messages: [
+                    { role: 'system', content: systemPrompt }, 
+                    { role: 'user', content: userMessage } // Using the variable defined above
+                ] 
+            })
         });
 
         if (!response.ok) throw new Error(await response.text());
@@ -101,11 +123,14 @@ Output Format: Provide ONLY the final generated prompt.
         const generatedText = json.choices[0].message.content;
         
         outputBox.value = generatedText;
+        
+        // Auto-trigger Step 2
         renderImages(); 
 
     } catch (error) {
         console.error(error);
         outputBox.value = "Error: " + error.message;
+        alert("Error generating prompt: " + error.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalContent;
@@ -156,7 +181,7 @@ async function fetchSingleImage(prompt, seed, width, height, model, index) {
     const card = document.getElementById(`img-card-${index}`);
     try {
         const encoded = encodeURIComponent(prompt);
-        const url = `${IMAGE_API_BASE}${encoded}?width=${width}&height=${height}&seed=${seed}&model=${model}&enhance=true&nologo=true`;
+        const url = `${IMAGE_API_BASE}${encoded}?width=${width}&height=${height}&seed=${seed}&model=${model}&enhance=false&negative_prompt=worst+quality%2C+blurry&private=true&nologo=true&nofeed=true&safe=false&quality=high&image=&transparent=false&guidance_scale=1&aspectRatio=16:9`;
         
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${EMBEDDED_API_KEY}` } });
         if(!res.ok) throw new Error("API Error");
@@ -179,7 +204,7 @@ async function generateStylePreview() {
     if(!styleDesc) return;
     container.innerHTML = `<div class="loading-spinner small"></div>`;
     try {
-        const blob = await generateQuickImageBlob(`Abstract art: ${styleDesc}`, 512, 256);
+        const blob = await generateQuickImageBlob(`Mountains and river art: ${styleDesc}`, 512, 256);
         styleImageUrl = URL.createObjectURL(blob);
         container.innerHTML = `<img src="${styleImageUrl}">`;
     } catch(e) { container.innerHTML = 'Error'; }
@@ -307,15 +332,23 @@ function getSelectedCharactersString() {
 }
 
 function saveSettings() {
-    localStorage.setItem('vsc_style', document.getElementById('styleInput').value);
-    localStorage.setItem('vsc_bg', document.getElementById('bgInput').value);
+    if(document.getElementById('styleInput'))
+        localStorage.setItem('vsc_style', document.getElementById('styleInput').value);
+    
+    if(document.getElementById('bgInput'))
+        localStorage.setItem('vsc_bg', document.getElementById('bgInput').value);
+    
     const cleanChars = characters.map(({ imageUrl, loading, ...keepAttrs }) => keepAttrs);
     localStorage.setItem('vsc_chars', JSON.stringify(cleanChars));
 }
 
 function loadSettings() {
-    document.getElementById('styleInput').value = localStorage.getItem('vsc_style') || '';
-    document.getElementById('bgInput').value = localStorage.getItem('vsc_bg') || '';
+    if(document.getElementById('styleInput'))
+        document.getElementById('styleInput').value = localStorage.getItem('vsc_style') || '';
+    
+    if(document.getElementById('bgInput'))
+        document.getElementById('bgInput').value = localStorage.getItem('vsc_bg') || '';
+    
     const savedChars = localStorage.getItem('vsc_chars');
     if(savedChars) { 
         characters = JSON.parse(savedChars).map(c => ({...c, imageUrl: null, loading: false})); 
