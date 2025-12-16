@@ -86,17 +86,33 @@ async function generatePrompt() {
 
     try {
         const systemPrompt = `
-       You are an advanced Visual Scene Composer AI. Your task is to synthesize multiple disjointed data sources into a single, cohesive, and highly descriptive image generation prompt. You act as the bridge between a screenplay action and a generative image model.
-Input Data Structure: You will receive four distinct blocks of information: Visual Style, Characters (Master designs), Background, Action.
-Processing Logic:
-Analyze the Action prompt: Identify Subjects, Action, Camera/Framing.
-Retrieve & Enrich: For every character mentioned in the Action, look up their entry in Characters Design. Extract visual details (Age, hair, clothing). Do NOT include characters not present in the action.
-Integrate Setting: Blend Background details naturally with the action location.
-Construct Final Output order: [Visual Style tags], [Camera Angle/Shot Type] + [Brief Scene Summary], [Primary Character Details & Action], [Setting/Background Context], [Secondary Character Details & Action].
-Rules: Strictly adhere to physical descriptions in Master Characters Design unless overridden by the Action prompt. The output must be a continuous, descriptive paragraph.
-Output Format: Provide ONLY the final generated prompt.
-        `;
+      You are an advanced Visual Scene Composer AI. Your task is to synthesize multiple disjointed data sources into a single, cohesive, and highly descriptive image generation prompt. You act as the bridge between a screenplay action and a generative image model (like Midjourney or Stable Diffusion).
+Input Data Structure: You will receive four distinct blocks of information:
+Visual Style: The global artistic direction (e.g., lighting, texture, art style).
+Master Characters List: A dictionary of characters containing their fixed physical attributes, age, clothing, and specific visual traits.
+Background Description: A static description of the environment.
+Action Scenario: The specific action, camera angle, and narrative movement occurring in the scene.
 
+Processing Logic (Step-by-Step):
+Analyze the User Prompt: Identify the Subjects (Characters), the Action (what they are doing), the Camera/Framing (e.g., Medium shot, Over-the-shoulder), and any specific Lighting/Atmosphere mentioned. 
+Retrieve & Enrich:
+For every character mentioned in the User Prompt, look up their entry in Master Characters List.
+Extract their specific visual details (Age, Skin Tone, Hair Style/Color, Eye Color, Clothing) Except backround.
+Crucial: Do not mention characters from the Master List if they are not present in the Action Scenario.
+Integrate Setting: Incorporate details from the Background description, blending them naturally with where the characters are standing.
+Construct Final Output: Assemble the prompt in the following logical order for optimal image generation:
+
+[Visual Style tags]
+[Camera Angle/Shot Type] + [Brief Scene Summary]
+[Primary Character Details] (Name + Age + Physical Traits + Clothing) + [Primary Character Action]
+[Setting/Background Context] (blended with the action)
+[Secondary Character Details] (if applicable) + [Secondary Character Action]
+Rules & Constraints:
+Consistency: You must strictly adhere to the physical descriptions in the Master Characters List unless the Prompt Given By User explicitly overrides a feature (e.g., "Aarav changes into a suit"). If no change is specified, use the Master Character List clothing but never ever use background from Master design.
+Don't repeat character unnecessarily. 
+Flow: The final output must read as a continuous, descriptive paragraph, not a list.
+Tone: Maintain the mood specified in the Visual Style.
+Output Format: Provide ONLY the final generated prompt. Do not add conversational filler.   `;
         // --- FIX: Explicitly defining userMessage here ---
         const userMessage = `
         Visual Style: ${style}
@@ -109,7 +125,7 @@ Output Format: Provide ONLY the final generated prompt.
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${EMBEDDED_API_KEY}` },
             body: JSON.stringify({ 
-                model: 'gemini', 
+                model: 'gemini-search', 
                 messages: [
                     { role: 'system', content: systemPrompt }, 
                     { role: 'user', content: userMessage } // Using the variable defined above
@@ -148,7 +164,7 @@ async function renderImages() {
     const count = parseInt(document.getElementById('imgCount').value) || 4;
     const width = document.getElementById('imgWidth').value || 1920;
     const height = document.getElementById('imgHeight').value || 1080;
-    const model = document.getElementById('modelSelect').value || 'flux';
+    const model = document.getElementById('modelSelect').value || 'zimage';
     let baseSeed = document.getElementById('imgSeed').value;
     if(!baseSeed) baseSeed = Math.floor(Math.random() * 1000000);
     baseSeed = parseInt(baseSeed);
@@ -213,11 +229,12 @@ async function generateStylePreview() {
 
 async function generateBackgroundImage() {
     const bgDesc = document.getElementById('bgInput').value;
+const styleDesc = document.getElementById('styleInput').value;
     const container = document.getElementById('bgImageContainer');
     if(!bgDesc) return;
     container.innerHTML = `<div class="loading-spinner small"></div>`;
     try {
-        const blob = await generateQuickImageBlob(`Environment: ${bgDesc}`, 512, 256);
+        const blob = await generateQuickImageBlob(`Environment: ${bgDesc}, ${styleDesc}`, 512, 256);
         bgImageUrl = URL.createObjectURL(blob);
         container.innerHTML = `<img src="${bgImageUrl}">`;
     } catch(e) { container.innerHTML = 'Error'; }
@@ -227,6 +244,7 @@ async function generateBackgroundImage() {
 function addCharacter() {
     const nameInput = document.getElementById('newCharName');
     const descInput = document.getElementById('newCharDesc');
+
     const name = nameInput.value.trim();
     const desc = descInput.value.trim();
 
@@ -248,13 +266,13 @@ async function generateCharacterImage(id, event = null) {
     const charIndex = characters.findIndex(c => c.id === id);
     if (charIndex === -1) return;
     const char = characters[charIndex];
-    
+    const styleDesc = document.getElementById('styleInput').value;
     // Set loading
     characters[charIndex].loading = true;
     renderCharacters();
 
     try {
-        const blob = await generateQuickImageBlob(`Portrait of ${char.name}, ${char.desc}. Neutral background.`, 256, 256);
+        const blob = await generateQuickImageBlob(`Portrait of ${char.name}, ${char.desc}. Neutral background. ${styleDesc}`, 256, 256);
         characters[charIndex].imageUrl = URL.createObjectURL(blob);
     } catch (e) { console.error(e); } 
     finally {
