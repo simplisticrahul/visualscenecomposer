@@ -187,9 +187,20 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 .label-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .label-row label { font-size: 0.7rem; font-weight: 800; color: #999; }
 
+/* Default styles */
 .prompt-box {
-    background: #f9f9f9; border: 1px solid #eee; height: 60px;
-    font-size: 0.85rem; color: #555; margin-bottom: 10px;
+    background: #f9f9f9; 
+    border: 1px solid #eee; 
+    height: 60px;
+    margin-bottom: 10px;
+}
+
+/* Adjust for Desktop (e.g., screens wider than 768px) */
+@media (min-width: 768px) {
+    .prompt-box {
+        /* Add enough space to clear the nav button */
+        margin-bottom: 80px; 
+    }
 }
 
 .btn-render {
@@ -240,3 +251,31 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 }
 .loading-spinner.small { width: 14px; height: 14px; border-width: 2px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* ================= ADDED CSS ================= */
+.btn-download-img {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(0,0,0,0.1);
+    z-index: 2;
+}
+
+.btn-download-img:hover {
+    background: #000;
+    color: var(--whisk-yellow);
+    transform: scale(1.1) rotate(-5deg);
+    border-color: #000;
+}
