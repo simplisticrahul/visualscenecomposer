@@ -29,11 +29,14 @@ window.onload = async function() {
     if(document.getElementById('bgInput') && document.getElementById('bgInput').value) {
         generateBackgroundImage();
     }
+
+    // Trigger reload of all character images immediately
+    characters.forEach(c => generateCharacterImage(c.id));
 };
 
 async function fetchModels() {
     const select = document.getElementById('modelSelect');
-    if(!select) return; // Guard clause if element missing
+    if(!select) return; 
     
     try {
         const res = await fetch(MODELS_URL);
@@ -59,9 +62,12 @@ async function fetchModels() {
 // =========================================================
 
 async function generateQuickImageBlob(prompt, width, height) {
-    const seed = Math.floor(Math.random() * 1000000);
+    // Use the specific Global Seed instead of random
+    let seed = document.getElementById('imgSeed').value;
+    seed = seed ? parseInt(seed) : Math.floor(Math.random() * 1000000);
+
     const encoded = encodeURIComponent(prompt);
-    const url = `${IMAGE_API_BASE}${encoded}?width=${width}&height=${height}&seed=${seed}&model=flux&enhance=false&safe=false`;
+    const url = `${IMAGE_API_BASE}${encoded}?width=${width}&height=${height}&seed=${seed}&model=zimage&enhance=false&negative_prompt=worst+quality%2C+blurry&private=true&nologo=true&nofeed=true&safe=false&quality=high&image=&transparent=false&guidance_scale=1`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${EMBEDDED_API_KEY}` } });
     if(!res.ok) throw new Error("API Error");
     return await res.blob();
@@ -113,7 +119,7 @@ Don't repeat character unnecessarily.
 Flow: The final output must read as a continuous, descriptive paragraph, not a list.
 Tone: Maintain the mood specified in the Visual Style.
 Output Format: Provide ONLY the final generated prompt. Do not add conversational filler.   `;
-        // --- FIX: Explicitly defining userMessage here ---
+        
         const userMessage = `
         Visual Style: ${style}
         Characters Master List: ${chars}
@@ -128,7 +134,7 @@ Output Format: Provide ONLY the final generated prompt. Do not add conversationa
                 model: 'gemini-search', 
                 messages: [
                     { role: 'system', content: systemPrompt }, 
-                    { role: 'user', content: userMessage } // Using the variable defined above
+                    { role: 'user', content: userMessage } 
                 ] 
             })
         });
@@ -165,6 +171,8 @@ async function renderImages() {
     const width = document.getElementById('imgWidth').value || 1920;
     const height = document.getElementById('imgHeight').value || 1080;
     const model = document.getElementById('modelSelect').value || 'zimage';
+    
+    // Main render uses seed + index, but starts from the input value
     let baseSeed = document.getElementById('imgSeed').value;
     if(!baseSeed) baseSeed = Math.floor(Math.random() * 1000000);
     baseSeed = parseInt(baseSeed);
@@ -193,6 +201,7 @@ async function renderImages() {
     btn.innerHTML = originalText;
 }
 
+// UPDATED FUNCTION
 async function fetchSingleImage(prompt, seed, width, height, model, index) {
     const card = document.getElementById(`img-card-${index}`);
     try {
@@ -204,7 +213,19 @@ async function fetchSingleImage(prompt, seed, width, height, model, index) {
 
         const blob = await res.blob();
         const objUrl = URL.createObjectURL(blob);
-        card.innerHTML = `<img src="${objUrl}" onclick="window.open('${objUrl}')" style="cursor:zoom-in">`;
+
+        // Create safe filename from prompt + index (1-based)
+        const safePrompt = prompt.replace(/[^a-zA-Z0-9 ,.-]/g, '_').substring(0, 150);
+        const fileName = `${safePrompt} - ${index + 1}.png`;
+
+        // Inject image and download button
+        card.innerHTML = `
+            <img src="${objUrl}" onclick="window.open('${objUrl}')" style="cursor:zoom-in">
+            <a href="${objUrl}" download="${fileName}" class="btn-download-img" title="Download Image ${index + 1}">
+                <span class="material-icons-round" style="font-size: 20px;">download</span>
+            </a>
+        `;
+
     } catch(e) {
         card.innerHTML = `<span style="color:red; font-size:0.8rem;">Failed</span>`;
     }
@@ -213,6 +234,13 @@ async function fetchSingleImage(prompt, seed, width, height, model, index) {
 // =========================================================
 // 4. AUTO-GENERATION ASSETS
 // =========================================================
+
+// New function to update everything when seed changes
+function refreshAllPreviews() {
+    if(document.getElementById('styleInput').value) generateStylePreview();
+    if(document.getElementById('bgInput').value) generateBackgroundImage();
+    characters.forEach(c => generateCharacterImage(c.id));
+}
 
 async function generateStylePreview() {
     const styleDesc = document.getElementById('styleInput').value;
@@ -229,7 +257,7 @@ async function generateStylePreview() {
 
 async function generateBackgroundImage() {
     const bgDesc = document.getElementById('bgInput').value;
-const styleDesc = document.getElementById('styleInput').value;
+    const styleDesc = document.getElementById('styleInput').value;
     const container = document.getElementById('bgImageContainer');
     if(!bgDesc) return;
     container.innerHTML = `<div class="loading-spinner small"></div>`;
@@ -272,6 +300,7 @@ async function generateCharacterImage(id, event = null) {
     renderCharacters();
 
     try {
+        // Will now use Global Seed via generateQuickImageBlob
         const blob = await generateQuickImageBlob(`Portrait of ${char.name}, ${char.desc}. Neutral background. ${styleDesc}`, 256, 256);
         characters[charIndex].imageUrl = URL.createObjectURL(blob);
     } catch (e) { console.error(e); } 
@@ -307,7 +336,7 @@ function renderCharacters() {
     const container = document.getElementById('characterListContainer');
     container.innerHTML = '';
     characters.forEach(c => {
-        const div = document.createElement('div');
+        const div = document.createElement('createElement');
         div.className = `char-item ${c.selected ? 'selected' : ''}`;
         
         // CLICK HANDLER: Select row (ignore buttons)
