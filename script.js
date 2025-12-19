@@ -216,8 +216,8 @@ async function renderImages() {
   if (!prompt || prompt.startsWith("Error") || prompt.startsWith("Synthesizing")) return;
 
   const count = parseInt(document.getElementById("imgCount").value) || 4;
-  const width = document.getElementById("imgWidth").value || 1920;
-  const height = document.getElementById("imgHeight").value || 1080;
+  const width = document.getElementById("imgWidth").value || 2048;
+  const height = document.getElementById("imgHeight").value || 1152;
   const model = getSelectedModel();
 
   let baseSeed = document.getElementById("imgSeed").value;
