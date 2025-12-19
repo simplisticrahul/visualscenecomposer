@@ -33,6 +33,7 @@ body {
     box-sizing: border-box;
     border-right: 1px solid rgba(0,0,0,0.05);
     flex-shrink: 0;
+    transition: width 0.22s ease, padding 0.22s ease, transform 0.22s ease;
 }
 
 .brand {
@@ -104,10 +105,10 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 }
 
 /* SELECTED STATE */
-.char-item.selected { 
-    border-color: #000; 
-    background: #fff; 
-    opacity: 1; 
+.char-item.selected {
+    border-color: #000;
+    background: #fff;
+    opacity: 1;
     filter: grayscale(0%);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
@@ -161,7 +162,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 /* PREVIEW BOXES */
 .bg-thumb-container {
     width: 100%;
-    height: 140px; 
+    height: 100%;
     background: #e5e5e5;
     border-radius: 8px;
     overflow: hidden;
@@ -189,17 +190,16 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 
 /* Default styles */
 .prompt-box {
-    background: #f9f9f9; 
-    border: 1px solid #eee; 
-    height: 60px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    height: 70px;
     margin-bottom: 10px;
 }
 
 /* Adjust for Desktop (e.g., screens wider than 768px) */
 @media (min-width: 768px) {
     .prompt-box {
-        /* Add enough space to clear the nav button */
-        margin-bottom: 80px; 
+        margin-bottom: 80px;
     }
 }
 
@@ -224,7 +224,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 .image-card img { width: 100%; height: 100%; object-fit: cover; }
 .empty-state { grid-column: 1/-1; text-align: center; color: #999; margin-top: 50px; }
 
-/* Floating Bar */
+/* Floating Bar (original; overridden by fix at end) */
 .floating-bar-wrapper {
     position: absolute; bottom: 30px; left: 0; right: 0;
     display: flex; justify-content: center; pointer-events: none;
@@ -252,7 +252,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
 .loading-spinner.small { width: 14px; height: 14px; border-width: 2px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* ================= ADDED CSS ================= */
+/* Download button */
 .btn-download-img {
     position: absolute;
     bottom: 12px;
@@ -272,10 +272,247 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #000; }
     border: 1px solid rgba(0,0,0,0.1);
     z-index: 2;
 }
-
 .btn-download-img:hover {
     background: #000;
     color: var(--whisk-yellow);
     transform: scale(1.1) rotate(-5deg);
     border-color: #000;
+}
+
+/* =========================
+   RESPONSIVE (Mobile + Tablet)
+   ========================= */
+
+/* Fix flex overflow issues so inner scrollers work reliably */
+.sidebar,
+.main-content,
+.scroll-content,
+.gallery-area {
+  min-height: 0;
+}
+
+/* Use modern viewport units on mobile browsers */
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  .whisk-layout {
+    flex-direction: column;
+    height: 100dvh;
+    width: 100vw;
+  }
+
+  .studio-header {
+    padding: 12px 14px;
+  }
+
+  .prompt-box {
+    height: 72px;
+    margin-bottom: 12px;
+  }
+
+  .gallery-area {
+    padding: 14px;
+    padding-bottom: 120px;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+  }
+
+  .image-card {
+    border-radius: 12px;
+  }
+
+  .floating-bar-wrapper {
+    bottom: 12px;
+    padding: 0 12px;
+  }
+
+  .floating-bar {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+    padding: 8px;
+  }
+
+  #actionInput {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .btn-action-primary {
+    width: 44px;
+    height: 44px;
+  }
+
+  .config-grid { flex-wrap: wrap; }
+  .char-input-group { flex-wrap: wrap; }
+  .char-input-group input[type="text"] { flex: 1 1 160px; }
+}
+
+@media (max-width: 420px) {
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .brand h1 {
+    font-size: 1.05rem;
+  }
+}
+
+/* =========================
+   SIDEBAR TOGGLE BUTTON (Always visible)
+   ========================= */
+
+/* Always show the sidebar toggle button (desktop + mobile) */
+.mobile-menu-btn{
+  display:inline-flex;
+  border:none;
+  background:#000;
+  color:var(--whisk-yellow);
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  cursor:pointer;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+}
+
+/* Make room for the button in header */
+.studio-header{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.prompt-studio-box{ flex: 1; }
+
+/* Backdrop base */
+.sidebar-backdrop{
+  display:none;
+}
+
+/* Desktop collapse mode (button toggles .sidebar-collapsed) */
+.whisk-layout.sidebar-collapsed .sidebar{
+  width: 0 !important;
+  padding: 0 !important;
+  border-right: none !important;
+  overflow: hidden !important;
+}
+.whisk-layout.sidebar-collapsed .sidebar > *{
+  display:none;
+}
+
+/* =========================
+   PHONE UX: Sidebar Drawer
+   ========================= */
+
+@media (max-width: 900px){
+  /* Off-canvas drawer */
+  .sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    height:100dvh;
+    width:min(92vw, 380px);
+    z-index:1000;
+    transform:translateX(-105%);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border-right:none;
+  }
+
+  .sidebar-backdrop{
+    display:block;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(2px);
+    z-index:999;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 0.22s ease;
+  }
+
+  .whisk-layout.sidebar-open .sidebar{ transform:translateX(0); }
+  .whisk-layout.sidebar-open .sidebar-backdrop{ opacity:1; pointer-events:auto; }
+}
+
+/* =========================
+   FIX: Floating action bar hidden under browser UI
+   ========================= */
+
+.floating-bar-wrapper{
+  position: fixed; /* was absolute */
+  left: 0;
+  right: 0;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 2000;
+}
+
+/* Ensure the scrolling content never goes behind the floating bar */
+.gallery-area{
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Keep main content from clipping fixed elements on some browsers */
+.main-content{ overflow: visible; }
+/* =========================
+   TOP APP BAR
+   ========================= */
+.top-appbar{
+  position: sticky;
+  top: 0;
+  z-index: 3000;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--whisk-yellow);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.appbar-title{
+  font-weight: 800;
+  color: #111;
+  font-size: 0.98rem;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Workspace fills remaining height below top bar */
+.whisk-layout{
+  height: calc(100dvh - 56px);
+}
+/* =========================
+   MOBILE FIX: Sidebar fields hidden by bottom action bar
+   ========================= */
+
+@media (max-width: 900px){
+  /* Extra space so last fields (like Seed) stay scrollable into view */
+  .sidebar .scroll-content{
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* When sidebar drawer is open, hide the bottom action bar (prevents overlap) */
+  .whisk-layout.sidebar-open .floating-bar-wrapper{
+    display: none;
+  }
+}
+/* Professional input typography */
+input[type="text"], input[type="number"], textarea, select{
+  font-family: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+#promptOutput, #actionInput{
+  font-weight: 500;
+  line-height: 1.35;
 }
