@@ -1,7 +1,7 @@
 {
   "name": "Visual Scene Composer Pro",
   "short_name": "VSCP",
-  "start_url": "index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
